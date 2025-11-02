@@ -1,47 +1,58 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+)
 
 const (
-	PointValueEmpty = 0
-	PointValueO     = 1
-	PointValueX     = 2
-
-	GameStatusDraw = 3
+	TournX = 10
+	TournO = 11
+)
+const (
+	NoneWinner = 20
+	Drow       = 21
+	WinnerX    = 22
+	WinnerO    = 23
 )
 
 type Game struct {
-	ID     string //UUID
-	Board  Board
-	Turn   int
-	Winner int
+	board  Board
+	turn   int
+	winner int
 }
 
-func ValidateBoards(prev, next Game) error {
-	if prev.Winner != PointValueEmpty || next.Winner != PointValueEmpty {
+func NewGame(b Board, t, w int) Game {
+	return Game{
+		board:  b,
+		turn:   t,
+		winner: w,
+	}
+}
+func (g *Game) ValidateNextState(next Game) error {
+	if g.GetWinner() != NoneWinner || next.GetWinner() != NoneWinner {
 		return errors.New("game finished")
 	}
 
-	prevX, prevO := 0, 0
-	nextX, nextO := 0, 0
+	prevXNum, prevONum := 0, 0
+	nextXNum, nextONum := 0, 0
 	changes := 0
 
 	for i := 0; i < 3; i++ {
 		for j := 0; j < 3; j++ {
-			a := prev.Board.Matrix[i][j]
-			b := next.Board.Matrix[i][j]
+			a := g.board.GetPoint(i, j)
+			b := next.board.GetPoint(i, j)
 
 			if a == PointValueX {
-				prevX++
+				prevXNum++
 			}
 			if a == PointValueO {
-				prevO++
+				prevONum++
 			}
 			if b == PointValueX {
-				nextX++
+				nextXNum++
 			}
 			if b == PointValueO {
-				nextO++
+				nextONum++
 			}
 
 			if a != PointValueEmpty && a != b {
@@ -57,13 +68,13 @@ func ValidateBoards(prev, next Game) error {
 		return errors.New("exactly one cell must change")
 	}
 
-	switch prev.Turn {
-	case PointValueX:
-		if !(nextX == prevX+1 && nextO == prevO) {
+	switch g.GetTurn() {
+	case TournX:
+		if !(nextXNum == prevXNum+1 && nextONum == prevONum) {
 			return errors.New("x must add exactly one mark")
 		}
-	case PointValueO:
-		if !(nextO == prevO+1 && nextX == prevX) {
+	case TournO:
+		if !(nextONum == prevONum+1 && nextXNum == prevXNum) {
 			return errors.New("o must add exactly one mark")
 		}
 	default:
@@ -72,36 +83,37 @@ func ValidateBoards(prev, next Game) error {
 	return nil
 }
 
-func (g *Game) CheckGameCompete() bool {
-	m := g.Board.Matrix
-
-	for i := 0; i < 3; i++ {
-		if m[i][0] != PointValueEmpty && m[i][0] == m[i][1] && m[i][1] == m[i][2] {
-			g.Winner = m[i][0]
-			return true
-		}
-		if m[0][i] != PointValueEmpty && m[0][i] == m[1][i] && m[1][i] == m[2][i] {
-			g.Winner = m[0][i]
-			return true
-		}
+func (g *Game) SetGameWinner() (int, bool) {
+	if winner, _ := g.board.CheckWinner(PointValueO); winner == true {
+		g.winner = WinnerO
+		return WinnerO, true
 	}
-	if m[0][0] != PointValueEmpty && m[0][0] == m[1][1] && m[1][1] == m[2][2] {
-		g.Winner = m[0][0]
-		return true
-	}
-	if m[0][2] != PointValueEmpty && m[0][2] == m[1][1] && m[1][1] == m[2][0] {
-		g.Winner = m[0][2]
-		return true
+	if winner, _ := g.board.CheckWinner(PointValueX); winner == true {
+		g.winner = WinnerX
+		return WinnerX, true
 	}
 
-	for i := 0; i < 3; i++ {
-		for j := 0; j < 3; j++ {
-			if m[i][j] == PointValueEmpty {
-				return false // ещё можно играть
-			}
-		}
+	if full := g.IsFull(); full == true {
+		g.winner = Drow
+		return Drow, true
 	}
 
-	g.Winner = GameStatusDraw
-	return true
+	return -1, false
+}
+
+func (g *Game) GetWinner() int {
+	return g.winner
+}
+func (g *Game) GetTurn() int {
+	return g.turn
+}
+func (g *Game) NextTour() {
+	if g.turn == TournX {
+		g.turn = TournO
+	} else if g.turn == TournO {
+		g.turn = TournX
+	}
+}
+func (g *Game) Board() *Board {
+	return &g.board
 }
