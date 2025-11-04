@@ -9,7 +9,7 @@ const (
 )
 
 type Board struct {
-	matrix [3][3]int
+	matrix [3][3]int `default:"{}"`
 }
 
 func NewBoard(m [3][3]int) Board {
@@ -20,10 +20,10 @@ func NewBoard(m [3][3]int) Board {
 func (b *Board) Matrix() [3][3]int {
 	return b.matrix
 }
-func (g *Game) IsFull() bool {
+func (g *Board) IsFull() bool {
 	for i := 0; i < 3; i++ {
 		for j := 0; j < 3; j++ {
-			if g.board.matrix[i][j] == PointValueEmpty {
+			if g.matrix[i][j] == PointValueEmpty {
 				return false
 			}
 		}
@@ -53,6 +53,13 @@ func (b *Board) GetPoint(i, j int) int {
 func (b *Board) SetPoint(i, j, point int) error {
 	if point != PointValueX && point != PointValueO && point != PointValueEmpty {
 		return errors.New("invalid point")
+	}
+	if point == PointValueEmpty {
+		b.matrix[i][j] = point
+		return nil
+	}
+	if b.matrix[i][j] == PointValueX || b.matrix[i][j] == PointValueO {
+		return errors.New("point already occupied")
 	}
 	b.matrix[i][j] = point
 	return nil

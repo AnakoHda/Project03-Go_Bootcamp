@@ -3,37 +3,40 @@ package datasource
 import (
 	"Project03-Go_Bootcamp/internal/domain"
 	"context"
-
 	"errors"
+	"sync"
 )
 
 type MainRepo struct {
-	store *Store
+	data sync.Map
 }
 
-func NewRepository(store *Store) *MainRepo {
-	return &MainRepo{store: store}
+func New() *MainRepo {
+	return &MainRepo{
+		data: sync.Map{},
+	}
 }
 
-func (m *MainRepo) Save(ctx context.Context, g domain.Game) error {
+func (m *MainRepo) Save(ctx context.Context, g domain.Game, id string) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		game, id := ToDS(g)
-		m.store.data.Store(id, game)
+		game := ToDS(g)
+		m.data.Store(id, game)
 		return nil
 	}
 }
+
 func (m *MainRepo) Get(ctx context.Context, id string) (domain.Game, error) {
 	select {
 	case <-ctx.Done():
-		return domain.Game{}, ctx.Err() // отмена или timeout
+		return domain.Game{}, ctx.Err()
 	default:
-		value, ok := m.store.data.Load(id)
+		value, ok := m.data.Load(id)
 		if !ok {
-			return domain.Game{}, errors.New("game not found")
+			return domain.Game{}, errors.New("game not found" + id)
 		}
-		return ToDomain(value.(GameDS), id), nil
+		return ToDomain(value.(GameDS)), nil
 	}
 }

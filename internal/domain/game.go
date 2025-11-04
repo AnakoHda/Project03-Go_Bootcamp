@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	TournX = 10
-	TournO = 11
+	TurnX = 10
+	TurnO = 11
 )
 const (
 	NoneWinner = 20
@@ -21,7 +21,14 @@ type Game struct {
 	winner int
 }
 
-func NewGame(b Board, t, w int) Game {
+func NewGame() Game {
+	return Game{
+		board:  Board{},
+		turn:   TurnX,
+		winner: NoneWinner,
+	}
+}
+func SetGame(b Board, t, w int) Game {
 	return Game{
 		board:  b,
 		turn:   t,
@@ -69,11 +76,11 @@ func (g *Game) ValidateNextState(next Game) error {
 	}
 
 	switch g.GetTurn() {
-	case TournX:
+	case TurnX:
 		if !(nextXNum == prevXNum+1 && nextONum == prevONum) {
 			return errors.New("x must add exactly one mark")
 		}
-	case TournO:
+	case TurnO:
 		if !(nextONum == prevONum+1 && nextXNum == prevXNum) {
 			return errors.New("o must add exactly one mark")
 		}
@@ -93,7 +100,7 @@ func (g *Game) SetGameWinner() (int, bool) {
 		return WinnerX, true
 	}
 
-	if full := g.IsFull(); full == true {
+	if full := g.board.IsFull(); full == true {
 		g.winner = Drow
 		return Drow, true
 	}
@@ -108,10 +115,10 @@ func (g *Game) GetTurn() int {
 	return g.turn
 }
 func (g *Game) NextTour() {
-	if g.turn == TournX {
-		g.turn = TournO
-	} else if g.turn == TournO {
-		g.turn = TournX
+	if g.turn == TurnX {
+		g.turn = TurnO
+	} else if g.turn == TurnO {
+		g.turn = TurnX
 	}
 }
 func (g *Game) Board() *Board {

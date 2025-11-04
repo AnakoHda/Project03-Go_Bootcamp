@@ -4,17 +4,13 @@ import (
 	"Project03-Go_Bootcamp/internal/domain"
 )
 
-func ToDS(g domain.Game) (GameDS, string) {
+func ToDS(g domain.Game) GameDS {
 	return GameDS{
-		board:  g.Board,
-		turn:   g.Turn,
-		winner: g.Winner,
-	}, g.ID
+		Matrix: g.Board().Matrix(),
+		Turn:   g.GetTurn(),
+		Winner: g.GetWinner(),
+	}
 }
-func ToDomain(g GameDS, ID string) domain.Game {
-	return domain.Game{
-		ID:     ID,
-		Board:  g.board,
-		Turn:   g.turn,
-		Winner: g.winner}
+func ToDomain(g GameDS) domain.Game {
+	return domain.SetGame(domain.NewBoard(g.Matrix), g.Turn, g.Winner)
 }
